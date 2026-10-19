@@ -1,0 +1,445 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>DIU CIS Attendance Portal</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: slim brand bar, then a two-column desk (check-in form left, live roll sheet right) that stacks on phones. */
+:root {
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --ink: #101a33;
+  --muted: #5a6685;
+  --line: #dde2ee;
+  --brand: #12306b;
+  --brand-ink: #ffffff;
+  --daffodil: #f2b705;
+  --ok: #17784a;
+  --ok-bg: #e2f4ea;
+  --err: #b3261e;
+  --err-bg: #fbe9e7;
+  --head: #f1f4fa;
+  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink);
+  font: 15px/1.55 var(--font-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 40px;
+}
+.bar {
+  margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px))) calc(-1 * max(16px, env(safe-area-inset-right, 0px)));
+  padding: 14px max(16px, env(safe-area-inset-right, 0px)) 14px max(16px, env(safe-area-inset-left, 0px));
+  background: #ffffff; color: var(--brand);
+  border-bottom: 4px solid var(--daffodil);
+}
+.bar-inner { max-width: 1040px; margin: 0 auto; display: flex; align-items: center; gap: 14px; }
+.logo { flex: none; width: 58px; height: 58px; object-fit: contain; }
+.mark {
+  flex: none; width: 46px; height: 46px; display: grid; place-items: center;
+  background: var(--brand); color: var(--daffodil); border-radius: 6px;
+  font: 800 17px/1 var(--font-display); letter-spacing: .02em;
+}
+.bar p { margin: 0; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.bar h1 { margin: 2px 0 0; font: 800 22px/1.15 var(--font-display); text-wrap: balance; }
+.wrap { max-width: 1040px; margin: 0 auto; padding-top: 28px; }
+.lead { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px 24px; flex-wrap: wrap; margin-bottom: 22px; }
+.lead h2 { margin: 0; font: 800 clamp(26px, 5vw, 38px)/1.1 var(--font-display); text-wrap: balance; }
+.lead p { margin: 6px 0 0; color: var(--muted); max-width: 46ch; }
+.pill { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 999px; background: var(--ok-bg); color: var(--ok); font-weight: 600; font-size: 13px; }
+.pill i { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); }
+.desk { display: grid; grid-template-columns: minmax(0, 360px) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 800px) { .desk { grid-template-columns: minmax(0, 1fr); } }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 22px; min-width: 0; }
+.label { margin: 0 0 4px; font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.card h3 { margin: 0 0 16px; font: 800 20px/1.2 var(--font-display); }
+label { display: block; margin: 14px 0 6px; font-weight: 600; font-size: 14px; }
+input {
+  background: #fff;
+  width: 100%; padding: 11px 12px; font: inherit; color: var(--ink);
+  border: 1px solid var(--line); border-radius: 6px;
+}
+input.mono { font-family: var(--font-mono); letter-spacing: .03em; }
+input:focus-visible, button:focus-visible { outline: 3px solid var(--daffodil); outline-offset: 2px; }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 11px 18px; font: 600 14px var(--font-body); border-radius: 6px; cursor: pointer;
+  border: 1px solid transparent;
+}
+.btn.primary { background: var(--brand); color: var(--brand-ink); width: 100%; margin-top: 18px; }
+.btn.primary:hover { background: var(--ink); }
+.btn.ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+.btn.ghost:hover { background: var(--head); }
+.note { margin: 12px 0 0; font-size: 13px; color: var(--muted); }
+.msg { margin-top: 12px; min-height: 22px; padding: 0; font-weight: 600; font-size: 14px; border-radius: 6px; }
+.msg.ok, .msg.err { padding: 9px 12px; }
+.msg.ok { color: var(--ok); background: var(--ok-bg); }
+.msg.err { color: var(--err); background: var(--err-bg); }
+.head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
+.head h3 { margin-bottom: 0; }
+.count { text-align: right; line-height: 1; }
+.count strong { display: block; font: 800 38px/1 var(--font-display); color: var(--brand); font-variant-numeric: tabular-nums; }
+.count span { font-size: 12px; color: var(--muted); }
+.meta { display: flex; gap: 8px 32px; flex-wrap: wrap; padding: 12px 0; margin-bottom: 4px; border-block: 1px solid var(--line); }
+.meta span { display: block; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.meta strong { font-weight: 600; }
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; min-width: 440px; }
+th, td { padding: 10px 10px; text-align: left; border-bottom: 1px solid var(--line); font-size: 14px; }
+th { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); background: var(--head); }
+td.num, td.reg, td.sec { font-family: var(--font-mono); font-size: 13px; font-variant-numeric: tabular-nums; }
+td.num { color: var(--muted); width: 44px; }
+.empty td { padding: 30px 12px; text-align: center; color: var(--muted); }
+.empty strong { display: block; color: var(--ink); margin-bottom: 2px; }
+.actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+footer { max-width: 1040px; margin: 28px auto 0; color: var(--muted); font-size: 13px; }
+.menu-wrap { position: relative; }
+.menu { position: absolute; left: 0; bottom: calc(100% + 6px); min-width: 230px; z-index: 5; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 6px; box-shadow: 0 8px 24px rgba(16,26,51,.14); }
+.menu button { display: block; width: 100%; text-align: left; padding: 9px 10px; background: transparent; border: 0; border-radius: 6px; cursor: pointer; font: inherit; color: var(--ink); }
+.menu button:hover, .menu button:focus-visible { background: var(--head); outline: none; }
+.menu b { display: block; font-weight: 600; font-size: 14px; }
+.menu span { display: block; font-size: 12px; color: var(--muted); }
+.solo { max-width: 440px; margin: 0 auto; }
+.tlink { text-align: center; margin: 18px 0 0; }
+.btn.danger { background: transparent; color: var(--err); border-color: var(--err); }
+.btn.danger[data-armed="true"] { background: var(--err); color: #fff; }
+.btn.sm { padding: 7px 12px; font-size: 13px; }
+.newbox { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+.newbox input { flex: 1 1 200px; width: auto; }
+.past-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.past-row span { display: block; font-size: 13px; color: var(--muted); }
+.past-row div:last-child { display: flex; gap: 8px; }
+@media print {
+  #v-student, #v-pin, #past-card { display: none !important; }
+  .desk { grid-template-columns: minmax(0, 1fr); }
+  .desk > .card:first-child, .actions, .note, .pill { display: none !important; }
+  .card { border: 0; padding: 0; }
+  .table-wrap { overflow: visible; }
+  @page { margin: 14mm; }
+}
+@media (prefers-reduced-motion: no-preference) { .btn { transition: background .15s, color .15s; } }
+</style>
+
+<header class="bar">
+  <div class="bar-inner">
+    <img class="logo" id="logo" alt="Daffodil International University logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKAAAACgCAMAAAC8EZcfAAAC91BMVEVHcEwAAAADCQYAAAAAAgEAAAAAGyoagboVfrgMebUDdLMHdrQAbaoAcbEAcrEAc7IAcLAAc7MAdLQQfLcghLslh71AlsVNnckAcrI7k8Qpib4ti8BHmcdToMt2tNZwsdQEFAs2kMLe7fX////8/v7+/v/6/P33+/3x+Pvt9fro8/j0+vzj8PfZ6vTK4u+62euJvtvT5/J8t9iCu9qZx+AyjsGPwd3F3+5fp8/O5PBlqtCUxN9bpc2z1ejA3eyu0+drrdKpz+VXos2jzeWdyeKhy+Lr+f7k9v2i4Pne9P3V8fyY3fit5PppzvVsz/ZrzvZt0PdnyvNy0PZfxO9kx/BZv+xJseM6pdxBq981n9hUuukKesEAcbsBcrwAb7oPf8QDdL4Fd78gjc0Yh8kqltITgsZPtuYcissvmtUkkdB+1PeG1/fB6/uQ2ffO7/y35/p40/fH7fsliMZhueB+yetdsdVt0vlBhKBr0PgYMDpPpte4uLkaKS8ePks1aX5Ml7UhZowAa7IuVmVeiJvW3uC81eGxOy/HLyvYJifuGyPwGiPtHCTkHyWaRzR+VzpoYz5PcEQphUw4fUnOz8/n5+ft7e0iIyNhYWKLj5Gho6TAwcLIyMnX2NjR0tPc3d7f4OE1NTWZmpr4+fn09PRHR0esrKxYWVo9Pj4sLS2AgIFQUFBtbm8WFhYMNh4NOiASSyoZaTsPPyMfgUgdeUQhh0wcdkIghUsbcUAabT0gg0ogik4ijE8ii08iiU0hiU0iik4ii04efkcWWzMIIxMUVzEHHxETUS0LMBoXYjcQRSYBHi8BQmcAZ6AAWYoASHABTXkAOFcBIzcAb60APmABU4IAKkIBFyQAaqUACA0AXpICExwAMUwAY5sADRUFGQ4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEDwkJKRcAAAAAAAAAAAAABAcBBgMgvVBZAAAA+3RSTlMA8//5////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////s7w6po4yxB4W0GqBdf1eRdtS5CjrmQ///wkBBEGPt/0AABa7SURBVHja7Vx5fBPVvi8lQ5cwJ9ON0tIW2pOmSyjdoHRlF6qQaUpXaJoutLQgLldF37s87/O+xQX0evVdd6QIgoALCC2lLckEBCwKckFkUxBRFpV9E4E/3jlnJs1MMklD03r5g98H+skyM+c7v/33O7+Jl9c9ukf36B7dIzfoWn+q1+mHuxwfRV3uNXw3EL5DA3qVDiGAZ0/1Ir5bqt4lBiNUXOs1fIp9wM2V3TwOgFsIYf8bvYSPOuguPtUg2k2EDEbY76bH+G72Q9f5zl18NDPCh3HvYLAPI7zye2/g2+0u+8AgCGGqv5sHD1Sga1/qBXx77kD5w6CGcft2CMIzHuP7+g7wgTyfdB/3jz6I3eHJnuP7/Qo6/9s78R4AqMCdHE4Qfu8Rvr0Bqj4ksAsjvNpDgBjfgUBVnxL4DiP8pUf4LqEzjwZgsfFSAzSgrYIknwE5z2w9ukvk6AD+IwDsPDqwIfy5h/huDQYqOjVmhJ8KDAYjY9ISiY+jk5RjQieomBgGraEMJQsB4R8Y5z8a2D6JTgNMDPDNwyAzQqz3gw8ASSCTR3gYI7zYIwUkAY6JA0NiQEpaUNy4hKHKjAgQlh7nPy43W8VAv8gcn5HJIC2TjkoJC8vwDx4ZGpnoO44elwYiB6WAUSNHhWUARg18skIG5fiFBmfTUSA9l47K8B05AUQNTc31CZqAVsAIz955avMDOg3fIgIIYsOjR4fE+8b4xAePCNf4xSqTCECfmJDUzJT0zJFD4JColKhx2b7QN8kvZmh6aN7YCWOjo3y0VoCRYyNz7gvRKJMyIscHw/ARkdkgflTeqIkZYWiFgAEUdaEHMkY+8J8YoIbxTRw6KTk4HsQoIZMRmrBPYwWY7JcUGjUxJSoklokKjRwak6tWpvrHTIoOShobnBEWHxqPAWpUIaMjo0aNvC88LXlQXnpUcCzjm6Lxiw8ez8TFI60G+xErepI1XETn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">
+    <div>
+      <p>Daffodil International University</p>
+      <h1>CIS Attendance Portal</h1>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div id="v-student">
+    <section class="lead">
+      <div>
+        <h2>CIS - 26</h2>
+        <p>Enter your name, registration number and section to register your attendance for this class session.</p>
+      </div>
+      <span class="pill"><i></i> Session open</span>
+    </section>
+    <section class="card solo" aria-labelledby="form-h">
+      <p class="label">Student check-in</p>
+      <h3 id="form-h">Mark your attendance</h3>
+      <form id="attendance-form" novalidate>
+        <label for="student-name">Full name</label>
+        <input id="student-name" type="text" autocomplete="name" placeholder="Enter your full name" maxlength="100" required>
+        <label for="reg-number">Registration number</label>
+        <input id="reg-number" class="mono" type="text" autocomplete="off" maxlength="40" required>
+        <label for="section-name">Section name</label>
+        <input id="section-name" type="text" autocomplete="off" maxlength="30" required>
+        <button id="submit-btn" class="btn primary" type="submit">Submit attendance &rarr;</button>
+      </form>
+      <div id="msg" class="msg" role="status" aria-live="polite"></div>
+      <p class="note">Check your details before submitting. Each registration number is recorded once.</p>
+    </section>
+    <p class="tlink"><button id="t-open" class="btn ghost sm" type="button">Teacher's only</button></p>
+  </div>
+
+  <div id="v-pin" hidden>
+    <section class="card solo">
+      <p class="label">Teacher's only</p>
+      <h3>Enter teacher PIN</h3>
+      <form id="pin-form">
+        <label for="pin">PIN</label>
+        <input id="pin" class="mono" type="password" inputmode="numeric" autocomplete="off" maxlength="30">
+        <button class="btn primary" type="submit">Open teacher page</button>
+      </form>
+      <div id="pin-msg" class="msg" role="status" aria-live="polite"></div>
+      <button id="pin-back" class="btn ghost sm" type="button">&larr; Back to student page</button>
+    </section>
+  </div>
+
+  <div id="v-teacher" hidden>
+    <section class="card">
+      <div class="head">
+        <div><p class="label">Teacher's page</p><h3 id="t-title">Current class</h3></div>
+        <div class="count"><strong id="count">0</strong><span>students</span></div>
+      </div>
+      <div class="meta">
+        <div><span>Class</span><strong id="cls">-</strong></div>
+        <div><span>Date</span><strong id="today">-</strong></div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>#</th><th>Student name</th><th>Registration no.</th><th>Section</th></tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+      <div class="actions">
+        <div class="menu-wrap">
+          <button id="save" class="btn ghost" type="button" aria-haspopup="true" aria-expanded="false">Save as &#9662;</button>
+          <div id="menu" class="menu" role="menu" hidden>
+            <button type="button" role="menuitem" data-fmt="pdf"><b>PDF</b><span>Formatted report with logo</span></button>
+            <button type="button" role="menuitem" data-fmt="csv"><b>Excel (CSV)</b><span>Opens in Excel or Sheets</span></button>
+            <button type="button" role="menuitem" data-fmt="print"><b>Print</b><span>Send to a printer</span></button>
+          </div>
+        </div>
+        <button id="refresh" class="btn ghost" type="button">Refresh</button>
+        <button id="back" class="btn ghost" type="button" hidden>&larr; Back to current class</button>
+        <button id="leave" class="btn ghost" type="button">Back to student page</button>
+      </div>
+      <div id="newbox" class="newbox">
+        <input id="next-label" type="text" maxlength="40" placeholder="Next class name (optional)" aria-label="Next class name">
+        <button id="newclass" class="btn danger" type="button" data-armed="false">Start new class</button>
+      </div>
+      <p id="tnote" class="note" role="status" aria-live="polite">Save the report first (PDF or Excel). Then start a new class: this one moves to Past classes.</p>
+    </section>
+    <section id="past-card" class="card" style="margin-top:20px">
+      <p class="label">Records</p>
+      <h3>Past classes</h3>
+      <div id="past">No past classes yet.</div>
+    </section>
+  </div>
+</main>
+
+<footer>DIU CIS Attendance Portal &middot; Built by Aiman | 263-16-022 Daffodil International University</footer>
+
+<script src="config.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+(function () {
+  "use strict";
+  // The two Supabase values live in config.js (so you never edit this big file).
+  var CFG = window.APP_CONFIG || {};
+  var SUPABASE_URL = CFG.url || "https://tcyerucufvujhdvysfxs.supabase.co";
+  var SUPABASE_KEY = CFG.key || "sb_publishable_7sIZL2KgnGC0gW-Rh04-SQ_cTQ5IfRp";
+
+  SUPABASE_URL = SUPABASE_URL.trim().replace(/\/rest\/v1.*$/, "").replace(/\/+$/, "");
+  SUPABASE_KEY = SUPABASE_KEY.trim();
+  function why(err) { var m = String((err && err.message) || err); return m.length > 140 ? m.slice(0, 140) + "..." : m; }
+  var $ = function (id) { return document.getElementById(id); };
+  var pin = "", savedKey = "", timer = null;
+  var view = { id: 0, label: "", date: "", rows: [], current: true };
+  var copyNote = $("tnote"), saveBtn = $("save"), menu = $("menu");
+
+  function rpc(fn, args) {
+    return fetch(SUPABASE_URL + "/rest/v1/rpc/" + fn, {
+      method: "POST",
+      headers: SUPABASE_KEY.indexOf("eyJ") === 0 ? { "Content-Type": "application/json", apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY } : { "Content-Type": "application/json", apikey: SUPABASE_KEY },
+      body: JSON.stringify(args || {})
+    }).then(function (r) {
+      return r.json().catch(function () { return null; }).then(function (j) {
+        if (!r.ok) throw new Error((j && j.message) || "network");
+        if (j && j.error) throw new Error(j.error);
+        return j;
+      });
+    });
+  }
+  function show(id) { ["v-student", "v-pin", "v-teacher"].forEach(function (v) { $(v).hidden = v !== id; }); }
+  function say(el, text, kind) { el.textContent = text; el.className = "msg" + (kind ? " " + kind : ""); }
+  function fmtDate(iso) { return new Date(iso).toLocaleDateString([], { year: "numeric", month: "long", day: "numeric" }); }
+  function cell(tr, text, cls) { var td = document.createElement("td"); if (cls) td.className = cls; td.textContent = text; tr.appendChild(td); }
+  function btn(text, cls, fn) { var b = document.createElement("button"); b.type = "button"; b.className = "btn sm " + cls; b.textContent = text; b.addEventListener("click", fn); return b; }
+  function fail(err) {
+    note(err.message === "locked" ? "Too many wrong PIN tries. Try again in 15 minutes." :
+         err.message === "bad_pin" ? "PIN was not accepted." : "Something went wrong (" + why(err) + ").");
+  }
+
+  function reportDate() { return view.date; }
+  function stamp() { return new Date().toISOString().slice(0, 10); }
+  function note(t) { copyNote.textContent = t; }
+  function textReport(list) {
+    return "DIU CIS - 26 attendance, " + reportDate() + "\n#\tName\tRegistration no.\tSection\n" +
+      list.map(function (r, i) { return (i + 1) + "\t" + r.name + "\t" + r.reg + "\t" + (r.section || "-"); }).join("\n");
+  }
+  function csvReport(list) {
+    function q(v) { return '"' + String(v).replace(/"/g, '""') + '"'; }
+    var lines = [["#", "Student name", "Registration no.", "Section"].map(q).join(",")];
+    list.forEach(function (r, i) { lines.push([i + 1, r.name, r.reg, r.section || "-"].map(q).join(",")); });
+    return "\uFEFF" + lines.join("\r\n");
+  }
+  function saveFile(name, data) {
+    try {
+      var blob = data instanceof Blob ? data : new Blob([data], { type: "text/csv;charset=utf-8" });
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(blob); a.download = name;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+      markSaved(); note("Saved " + name + ". Check your downloads.");
+    } catch (e) { note("Saving did not work on this device. Try another browser."); }
+  }
+  function makePdf(list) {
+    var J = window.jspdf && window.jspdf.jsPDF;
+    if (!J) { note("PDF tool did not load. Check your connection or use Print."); return; }
+    var doc = new J({ unit: "pt", format: "a4" });
+    var W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight();
+    try { doc.addImage(document.getElementById("logo").src, "PNG", 40, 32, 54, 54); } catch (e) {}
+    doc.setTextColor(18, 48, 107); doc.setFont("helvetica", "bold"); doc.setFontSize(17);
+    doc.text("Daffodil International University", 106, 52);
+    doc.setFontSize(12); doc.text("CIS - 26 Attendance Report" + (view.label ? "  |  " + view.label : ""), 106, 70);
+    doc.setFont("helvetica", "normal"); doc.setFontSize(10); doc.setTextColor(90, 102, 133);
+    doc.text(reportDate() + "   |   Total students: " + list.length, 106, 86);
+    doc.setDrawColor(242, 183, 5); doc.setLineWidth(2.5); doc.line(40, 98, W - 40, 98);
+    var cols = [40, 72, 330, 460], y = 124;
+    function head() {
+      doc.setFillColor(234, 238, 247); doc.rect(40, y - 14, W - 80, 22, "F");
+      doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.setTextColor(18, 48, 107);
+      ["#", "Student name", "Registration no.", "Section"].forEach(function (t, i) { doc.text(t, cols[i] + 4, y); });
+      y += 24;
+    }
+    head();
+    doc.setFont("helvetica", "normal"); doc.setTextColor(16, 26, 51);
+    list.forEach(function (r, i) {
+      if (y > H - 60) { doc.addPage(); y = 56; head(); doc.setFont("helvetica", "normal"); doc.setTextColor(16, 26, 51); }
+      doc.setFontSize(10);
+      doc.text(String(i + 1), cols[0] + 4, y);
+      doc.text(doc.splitTextToSize(r.name, 250)[0], cols[1] + 4, y);
+      doc.text(r.reg, cols[2] + 4, y);
+      doc.text(doc.splitTextToSize(r.section || "-", 90)[0], cols[3] + 4, y);
+      doc.setDrawColor(221, 226, 238); doc.setLineWidth(.5); doc.line(40, y + 7, W - 40, y + 7);
+      y += 22;
+    });
+    saveFile("DIU-CIS-26-attendance-" + stamp() + ".pdf", doc.output("blob"));
+  }
+
+  function markSaved() { if (view.current) savedKey = view.id + ":" + view.rows.length; }
+
+  function render() {
+    $("count").textContent = view.rows.length;
+    $("t-title").textContent = view.current ? "Current class" : "Past class";
+    $("cls").textContent = view.label; $("today").textContent = view.date;
+    $("back").hidden = view.current; $("newbox").hidden = !view.current;
+    var tb = $("rows"); tb.textContent = "";
+    if (!view.rows.length) {
+      var tr = document.createElement("tr"); tr.className = "empty";
+      var td = document.createElement("td"); td.colSpan = 4;
+      var st = document.createElement("strong"); st.textContent = "No attendance submitted yet.";
+      td.appendChild(st); td.appendChild(document.createTextNode("Entries appear here as students check in."));
+      tr.appendChild(td); tb.appendChild(tr); return;
+    }
+    view.rows.forEach(function (r, i) {
+      var tr = document.createElement("tr");
+      cell(tr, i + 1, "num"); cell(tr, r.name); cell(tr, r.reg, "reg"); cell(tr, r.section || "-", "sec");
+      tb.appendChild(tr);
+    });
+  }
+  function setCurrent(d) {
+    view = { id: d.id, label: d.label, date: fmtDate(d.created_at), rows: d.rows || [], current: true };
+    render();
+  }
+  function loadCurrent(quiet) {
+    return rpc("teacher_current", { p_pin: pin }).then(function (d) { if (quiet && !view.current) return; setCurrent(d); });
+  }
+  function loadPast() {
+    return rpc("teacher_classes", { p_pin: pin }).then(function (d) {
+      var box = $("past"), list = d.classes || [];
+      box.textContent = "";
+      if (!list.length) { box.textContent = "No past classes yet. Classes appear here after you start a new one."; return; }
+      list.forEach(function (c) {
+        var row = document.createElement("div"); row.className = "past-row";
+        var info = document.createElement("div"), b = document.createElement("strong"), sp = document.createElement("span");
+        b.textContent = c.label; sp.textContent = fmtDate(c.created_at) + " \u00b7 " + c.count + " students";
+        info.appendChild(b); info.appendChild(sp);
+        var acts = document.createElement("div");
+        acts.appendChild(btn("Open", "ghost", function () {
+          rpc("teacher_class_rows", { p_pin: pin, p_id: c.id }).then(function (r) {
+            view = { id: c.id, label: c.label, date: fmtDate(c.created_at), rows: r.rows || [], current: false };
+            render(); window.scrollTo(0, 0);
+          }).catch(fail);
+        }));
+        var del = btn("Delete", "danger", function () {
+          if (del.dataset.armed !== "true") {
+            del.dataset.armed = "true"; del.textContent = "Click again to delete";
+            setTimeout(function () { del.dataset.armed = "false"; del.textContent = "Delete"; }, 4000); return;
+          }
+          rpc("teacher_delete_class", { p_pin: pin, p_id: c.id }).then(function () { return loadPast(); }).catch(fail);
+        });
+        acts.appendChild(del);
+        row.appendChild(info); row.appendChild(acts); box.appendChild(row);
+      });
+    });
+  }
+
+  function closeMenu() { menu.hidden = true; saveBtn.setAttribute("aria-expanded", "false"); }
+  saveBtn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    var open = menu.hidden; menu.hidden = !open; saveBtn.setAttribute("aria-expanded", String(open));
+  });
+  document.addEventListener("click", function (e) { if (!menu.contains(e.target)) closeMenu(); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeMenu(); });
+  menu.addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-fmt]"); if (!b) return;
+    var f = b.getAttribute("data-fmt"); closeMenu();
+    if (!view.rows.length) { note("Nothing to save yet."); return; }
+    if (f === "pdf") { makePdf(view.rows); }
+    else if (f === "csv") { saveFile("DIU-CIS-26-attendance-" + stamp() + ".csv", csvReport(view.rows)); }
+    else { try { window.print(); } catch (err) { note("Printing is blocked here. Save as PDF instead."); } }
+  });
+
+  $("newclass").addEventListener("click", function () {
+    var b = $("newclass");
+    function reset() { b.dataset.armed = "false"; b.textContent = "Start new class"; }
+    if (view.rows.length && savedKey !== view.id + ":" + view.rows.length) {
+      note("Save the report first (Save as > PDF or Excel). If new students checked in since your last save, save again."); return;
+    }
+    if (b.dataset.armed !== "true") { b.dataset.armed = "true"; b.textContent = "Click again to confirm"; setTimeout(reset, 4000); return; }
+    reset();
+    rpc("teacher_new_class", { p_pin: pin, p_label: $("next-label").value }).then(function () {
+      $("next-label").value = ""; savedKey = ""; return loadCurrent(false);
+    }).then(loadPast).then(function () { note("New class started. The old class is kept under Past classes."); }).catch(fail);
+  });
+  $("refresh").addEventListener("click", function () { loadCurrent(false).then(loadPast).catch(fail); });
+  $("back").addEventListener("click", function () { loadCurrent(false).catch(fail); });
+  $("leave").addEventListener("click", function () { pin = ""; savedKey = ""; show("v-student"); });
+  $("t-open").addEventListener("click", function () { say($("pin-msg"), ""); show("v-pin"); $("pin").focus(); });
+  $("pin-back").addEventListener("click", function () { show("v-student"); });
+
+  $("pin-form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var p = $("pin").value.trim(); if (!p) return;
+    rpc("teacher_current", { p_pin: p }).then(function (d) {
+      pin = p; $("pin").value = ""; savedKey = ""; setCurrent(d);
+      note("Save the report first (PDF or Excel). Then start a new class: this one moves to Past classes.");
+      show("v-teacher"); return loadPast();
+    }).catch(function (err) {
+      say($("pin-msg"), err.message === "locked" ? "Too many wrong tries. Try again in 15 minutes." :
+        err.message === "bad_pin" ? "Wrong PIN." : "Could not connect (" + why(err) + ").", "err");
+    });
+  });
+  timer = setInterval(function () { if (pin && !$("v-teacher").hidden && view.current) loadCurrent(true).catch(function () {}); }, 15000);
+
+  var form = $("attendance-form"), msg = $("msg");
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    var name = $("student-name").value.trim().replace(/\s+/g, " ");
+    var reg = $("reg-number").value.trim().replace(/\s+/g, "").toUpperCase();
+    var section = $("section-name").value.trim().replace(/\s+/g, " ");
+    if (!name || !reg || !section) { say(msg, "Fill in your name, registration number and section name.", "err"); return; }
+    var sb = $("submit-btn"); sb.disabled = true;
+    rpc("submit_attendance", { p_name: name, p_reg: reg, p_section: section }).then(function () {
+      form.reset(); $("student-name").focus(); say(msg, "Attendance recorded for " + name + ".", "ok");
+    }).catch(function (err) {
+      say(msg, err.message === "duplicate" ? "Registration number " + reg + " is already recorded." :
+        "Could not submit (" + why(err) + ").", "err");
+    }).then(function () { sb.disabled = false; });
+  });
+  if (SUPABASE_URL.indexOf("PASTE") === 0 || SUPABASE_KEY.indexOf("PASTE") === 0) say(msg, "Setup not finished: add your Supabase URL and key inside this file.", "err");
+})();
+</script>
+
+</body></html>
